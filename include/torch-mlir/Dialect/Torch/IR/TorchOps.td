@@ -885,7 +885,9 @@ def Torch_CopyToValueTensorOp : Torch_Op<"copy.to_vtensor", [
 }
 
 def Torch_OverwriteTensorOp : Torch_Op<"overwrite.tensor", [
-    AllowsTypeRefinement
+    TypesMatchWith<"overwritten tensor type is corresponding !torch.tensor of value tensor type",
+                   "value", "overwritten",
+                   "$_self.cast<ValueTensorType>().getWithoutValueSemantics()">
   ]> {
   let summary = "Ovewrite the contents of tensor with values from another.";
   let description = [{
@@ -897,8 +899,9 @@ def Torch_OverwriteTensorOp : Torch_Op<"overwrite.tensor", [
     might mutate `overwritten`, so this relationship need not hold for the
     entire program.
 
-    This op has undefined behavior if the two tensors have different
-    shapes or dtypes.
+    This op does not have the AllowsTypeRefinement trait because the types of the
+    two operands are coupled. Only places that know how to simultaneously update
+    both types should be changing the type of this op.
   }];
   let arguments = (ins
     Torch_ValueTensorType:$value,
